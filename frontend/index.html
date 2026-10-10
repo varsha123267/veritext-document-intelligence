@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veritext — Document Intelligence</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23CBA94E'/%3E%3Cstop offset='1' stop-color='%232D6E63'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23161F1A'/%3E%3Cpath d='M20 16h18l8 8v24a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2V18a2 2 0 0 1 2-2z' fill='url(%23g)'/%3E%3Cpath d='M38 16v8h8z' fill='%230C110F' fill-opacity='.35'/%3E%3Cpath d='M23 30l6 6 11-13' stroke='%230C110F' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3EEE3;--bg-elevated:#FFFFFF;--surface:#EAE2CE;--surface-2:#DED1AF;
+    --ink:#1B2420;--ink-muted:#6A6F62;--accent:#8A6A1E;--accent-soft:#B08B2E;--accent-ink:#FFFFFF;
+    --accent-2:#2D6E63;--accent-2-soft:#3E9284;
+    --teal:#3E7A72;--line:#CBBFA0;--danger:#A6432F;--shadow:rgba(27,36,32,0.14);--radius:3px;
+    --glass-bg:rgba(255,255,255,0.55);--glass-border:rgba(255,255,255,0.6);
+    --mesh-1:rgba(138,106,30,0.16);--mesh-2:rgba(45,110,99,0.14);--mesh-3:rgba(176,139,46,0.10);
+    --font-display:'Source Serif 4',Georgia,serif;--font-ui:'IBM Plex Sans',-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0C110F;--bg-elevated:#161F1A;--surface:#17211C;--surface-2:#1F2C25;
+      --ink:#ECE6D6;--ink-muted:#93A098;--accent:#CBA94E;--accent-soft:#E4C878;--accent-ink:#1B2420;
+      --accent-2:#4FAF9E;--accent-2-soft:#6FCBB9;
+      --teal:#6FA8A0;--line:#2A3830;--danger:#D9714F;--shadow:rgba(0,0,0,0.5);
+      --glass-bg:rgba(23,33,28,0.55);--glass-border:rgba(255,255,255,0.08);
+      --mesh-1:rgba(203,169,78,0.10);--mesh-2:rgba(79,175,158,0.10);--mesh-3:rgba(203,169,78,0.06);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0C110F;--bg-elevated:#161F1A;--surface:#17211C;--surface-2:#1F2C25;
+    --ink:#ECE6D6;--ink-muted:#93A098;--accent:#CBA94E;--accent-soft:#E4C878;--accent-ink:#1B2420;
+    --accent-2:#4FAF9E;--accent-2-soft:#6FCBB9;
+    --teal:#6FA8A0;--line:#2A3830;--danger:#D9714F;--shadow:rgba(0,0,0,0.5);
+    --glass-bg:rgba(23,33,28,0.55);--glass-border:rgba(255,255,255,0.08);
+    --mesh-1:rgba(203,169,78,0.10);--mesh-2:rgba(79,175,158,0.10);--mesh-3:rgba(203,169,78,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 600px at 8% -5%, var(--mesh-1), transparent 60%),
+      radial-gradient(ellipse 800px 700px at 95% 15%, var(--mesh-2), transparent 55%),
+      radial-gradient(ellipse 700px 600px at 40% 100%, var(--mesh-3), transparent 55%),
+      var(--bg);
+    background-attachment:fixed;
+    color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;
+    transition:background-color .3s;
+  }
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .glass{
+    background:var(--glass-bg) !important;
+    backdrop-filter:blur(16px) saturate(1.4);
+    -webkit-backdrop-filter:blur(16px) saturate(1.4);
+    border-color:var(--glass-border) !important;
+  }
+
+  #app{display:flex;flex-direction:column;height:100vh;}
+  .topbar{display:flex;align-items:baseline;gap:14px;padding:14px 24px;border-bottom:1px solid var(--glass-border);flex-shrink:0;position:relative;
+    background:var(--glass-bg);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);z-index:5;}
+  .topbar::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;
+    background:linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 50%, transparent 85%);}
+  .wordmark{font-family:var(--font-display);font-weight:700;font-size:20px;display:flex;align-items:center;gap:8px;}
+  .logo-mark{flex-shrink:0;filter:drop-shadow(0 2px 4px var(--shadow));}
+  .wordmark .dot{color:var(--accent);}
+  .tagline{font-size:12px;color:var(--ink-muted);font-family:var(--font-mono);}
+  .apibox{margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .apibox input{
+    font-family:var(--font-mono);font-size:11.5px;border:1px solid var(--line);background:var(--bg-elevated);
+    color:var(--ink-muted);padding:5px 10px;border-radius:14px;width:220px;
+  }
+  .connectbtn,.iconbtn2{border:1px solid var(--line);background:var(--bg-elevated);color:var(--ink);padding:5px 12px;border-radius:14px;font-size:12px;cursor:pointer;transition:border-color .15s, transform .1s;}
+  .connectbtn:hover,.iconbtn2:hover{border-color:var(--accent);}
+  .iconbtn2:active{transform:scale(.94);}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-muted);flex-shrink:0;box-shadow:0 0 0 0 transparent;transition:box-shadow .3s;}
+  .status-dot.ok{background:var(--accent-2);box-shadow:0 0 0 4px color-mix(in srgb, var(--accent-2) 25%, transparent);}
+  .status-dot.bad{background:var(--danger);}
+
+  .body-row{flex:1;display:flex;min-height:0;}
+  .sidebar{width:300px;flex-shrink:0;border-right:1px solid var(--glass-border);display:flex;flex-direction:column;overflow:hidden;
+    background:var(--glass-bg);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);}
+  .sidebar-head{padding:16px 18px 10px;display:flex;justify-content:space-between;align-items:center;}
+  .sidebar-head h2{font-family:var(--font-display);font-size:15px;margin:0;}
+  .sidebar-count{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);}
+  .dropzone{margin:0 16px 14px;border:1.5px dashed var(--line);border-radius:8px;padding:16px 12px;text-align:center;cursor:pointer;
+    background:color-mix(in srgb, var(--surface) 60%, transparent);transition:border-color .2s, background .2s, transform .15s;}
+  .dropzone:hover{transform:translateY(-1px);}
+  .dropzone.hover{border-color:var(--accent);background:var(--surface-2);}
+  .dropzone .dz-title{font-size:13px;font-weight:500;margin-bottom:3px;}
+  .dropzone p{margin:0;font-size:12px;color:var(--ink-muted);}
+  .dropzone .dz-icon{font-size:20px;display:block;margin-bottom:6px;}
+  .doclist{flex:1;overflow-y:auto;padding:0 12px 12px;}
+  .doccard{position:relative;border:1px solid var(--line);border-left:3px solid var(--doc-color,var(--accent));border-radius:8px;background:color-mix(in srgb, var(--bg-elevated) 80%, transparent);padding:10px 12px 9px;margin-bottom:9px;transition:box-shadow .15s, transform .15s, background .15s;backdrop-filter:blur(6px);}
+  .doccard:hover{box-shadow:0 3px 12px var(--shadow);transform:translateX(1px) translateZ(6px);}
+  .dc-title{font-family:var(--font-display);font-weight:600;font-size:13.5px;display:block;margin-bottom:4px;word-break:break-word;}
+  .dc-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);margin-bottom:6px;}
+  .dc-summary{font-size:11.5px;color:var(--ink-muted);margin-bottom:6px;line-height:1.4;}
+  .dc-keywords{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px;}
+  .chip{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:10px;background:var(--surface);color:var(--ink-muted);border:1px solid var(--line);}
+  .dc-remove{position:absolute;top:8px;right:8px;border:none;background:none;color:var(--ink-muted);cursor:pointer;font-size:13px;opacity:0;transition:opacity .12s;}
+  .doccard:hover .dc-remove{opacity:1;}
+  .sidebar-empty{padding:20px 18px;font-size:12px;color:var(--ink-muted);text-align:center;}
+  .recent-section{border-top:1px solid var(--line);padding:10px 16px 14px;flex-shrink:0;max-height:170px;overflow-y:auto;}
+  .recent-head{font-size:10.5px;color:var(--ink-muted);font-family:var(--font-mono);margin-bottom:6px;text-transform:lowercase;}
+  .recent-item{font-size:12px;padding:5px 8px;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);transition:background .12s;}
+  .recent-item:hover{background:var(--surface);}
+
+  .main{flex:1;display:flex;min-width:0;}
+  .askpane{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .thread{flex:1;overflow-y:auto;padding:22px 8%;}
+  .thread-inner{max-width:760px;margin:0 auto;}
+  .hero{max-width:480px;margin:10% auto 0;text-align:center;}
+  .hero-icon{font-size:32px;margin-bottom:12px;opacity:.85;}
+  .hero h1{font-family:var(--font-display);font-size:24px;margin:0 0 10px;}
+  .hero p{color:var(--ink-muted);font-size:13.5px;line-height:1.6;}
+
+  .msg{margin-bottom:20px;animation:msgIn .25s ease;}
+  @keyframes msgIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  .msg-user{display:flex;justify-content:flex-end;}
+  .msg-user .bubble{background:linear-gradient(135deg, var(--accent), var(--accent-soft));color:var(--accent-ink);padding:10px 15px;border-radius:14px 14px 3px 14px;max-width:78%;font-size:14px;box-shadow:0 4px 14px -6px var(--accent-soft);}
+  .msg-ai{display:flex;gap:11px;align-items:flex-start;}
+  .ai-mark{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg, var(--accent-2-soft), var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:12px;font-family:var(--font-display);font-weight:700;color:#fff;flex-shrink:0;margin-top:2px;box-shadow:0 2px 8px -3px var(--accent-2-soft);}
+  .ai-body{flex:1;min-width:0;}
+  .ai-text{font-size:14.5px;line-height:1.65;}
+  .ai-text.pending{color:var(--ink-muted);font-style:italic;}
+  .ai-para{margin:0 0 10px;}
+  .ai-para:last-child{margin-bottom:0;}
+  .ai-list{margin:0 0 10px;padding-left:22px;}
+  .ai-list:last-child{margin-bottom:0;}
+  .ai-list li{margin-bottom:4px;}
+  .ai-text strong{font-weight:600;color:var(--ink);}
+  .ai-foot{display:flex;align-items:center;gap:10px;margin-top:9px;}
+  .ai-foot button{border:none;background:none;color:var(--ink-muted);font-size:11.5px;cursor:pointer;}
+  .ai-foot button:hover{color:var(--accent);}
+
+  .composer{border-top:1px solid var(--line);padding:14px 8% 18px;}
+  .composer-inner{max-width:760px;margin:0 auto;}
+  .composer-row{display:flex;align-items:flex-end;gap:10px;background:var(--bg-elevated);border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 16px;box-shadow:0 1px 2px var(--shadow), 0 14px 28px -16px var(--shadow);transition:box-shadow .2s;}
+  .composer-row:focus-within{box-shadow:0 1px 2px var(--shadow), 0 18px 36px -14px var(--shadow), 0 0 0 2px var(--accent);}
+  .composer-row textarea{flex:1;border:none;outline:none;resize:none;background:transparent;color:var(--ink);font-family:var(--font-ui);font-size:14px;max-height:120px;padding:6px 0;}
+  .micbtn{width:34px;height:34px;border-radius:50%;background:transparent;border:1px solid var(--line);color:var(--ink-muted);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color .15s, color .15s, transform .12s;}
+  .micbtn:not(:disabled):hover{border-color:var(--accent-2);color:var(--accent-2);}
+  .micbtn:disabled{opacity:.35;cursor:not-allowed;}
+  .micbtn.listening{background:var(--danger);border-color:var(--danger);color:#fff;animation:micPulse 1.3s ease-in-out infinite;}
+  @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--danger) 45%, transparent);}50%{box-shadow:0 0 0 7px transparent;}}
+  .sendbtn{width:34px;height:34px;border-radius:50%;background:var(--accent);border:none;color:var(--accent-ink);cursor:pointer;flex-shrink:0;font-size:15px;box-shadow:0 3px 8px -2px var(--accent-soft), inset 0 1px 0 rgba(255,255,255,.25);transition:transform .12s, box-shadow .12s;}
+  .sendbtn:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 6px 14px -3px var(--accent-soft), inset 0 1px 0 rgba(255,255,255,.25);}
+  .sendbtn:not(:disabled):active{transform:translateY(0) scale(.94);}
+  .sendbtn:disabled{opacity:.35;cursor:not-allowed;}
+  .composer-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--ink-muted);}
+
+  .drawer{width:320px;flex-shrink:0;border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;}
+  .drawer.hidden{display:none;}
+  .drawer-head{padding:15px 16px 10px;display:flex;justify-content:space-between;border-bottom:1px solid var(--line);}
+  .drawer-head h3{font-family:var(--font-display);font-size:14px;margin:0;}
+  .drawer-close{border:none;background:none;color:var(--ink-muted);cursor:pointer;font-size:15px;}
+  .drawer-body{flex:1;overflow-y:auto;padding:12px 14px;}
+  .drawer-empty{color:var(--ink-muted);font-size:12.5px;padding:20px 4px;text-align:center;}
+  .source-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-elevated);padding:11px 12px;margin-bottom:10px;box-shadow:0 1px 2px var(--shadow);transition:box-shadow .2s, transform .2s;}
+  .source-card:hover{box-shadow:0 8px 18px -8px var(--shadow);transform:translateY(-1px);}
+  .source-card.focused{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+  .sc-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+  .sc-num{font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sc-doc{font-size:11px;color:var(--ink-muted);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sc-text{font-size:12.5px;line-height:1.55;}
+  .relbar{height:3px;background:var(--surface-2);border-radius:2px;margin-top:8px;overflow:hidden;}
+  .relbar-fill{height:100%;background:var(--teal);}
+
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px;}
+
+  .dotflicker span{animation:dotflicker 1.4s infinite;opacity:.2;}
+  .dotflicker span:nth-child(2){animation-delay:.2s;}
+  .dotflicker span:nth-child(3){animation-delay:.4s;}
+  @keyframes dotflicker{0%,80%,100%{opacity:.2;}40%{opacity:1;}}
+  .retry-btn{
+    border:1px solid var(--line);background:var(--bg-elevated);color:var(--accent);
+    padding:5px 12px;border-radius:14px;font-size:11.5px;cursor:pointer;margin-top:8px;
+  }
+  .retry-btn:hover{border-color:var(--accent);}
+  .err-text{color:var(--danger);}
+
+  /* ===== 3D depth system: layered shadows + pointer-tilt, CSS only ===== */
+  .tilt{transform-style:preserve-3d;will-change:transform;transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s;}
+  .tilt-shadow{box-shadow:0 1px 2px var(--shadow), 0 8px 20px -10px var(--shadow);}
+  .tilt:hover.tilt-shadow{box-shadow:0 2px 4px var(--shadow), 0 18px 34px -12px var(--shadow);}
+  .glass{
+    background:color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+    backdrop-filter:blur(10px) saturate(1.1);
+    -webkit-backdrop-filter:blur(10px) saturate(1.1);
+  }
+  .navtabs{display:flex;gap:2px;margin-left:8px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:3px;}
+  .navtabs button{border:none;background:transparent;color:var(--ink-muted);padding:6px 15px;border-radius:16px;font-size:12.5px;font-weight:500;cursor:pointer;transition:background .15s,color .15s;}
+  .navtabs button.active{background:var(--accent);color:var(--accent-ink);}
+
+  .suggest-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px auto 0;max-width:760px;padding:0 8%;}
+  .suggest-chip{
+    border:1px solid var(--line);background:color-mix(in srgb, var(--bg-elevated) 75%, transparent);color:var(--ink);
+    padding:7px 13px;border-radius:16px;font-size:12px;cursor:pointer;backdrop-filter:blur(6px);
+    transition:transform .15s, border-color .15s, box-shadow .15s, background .15s;
+  }
+  .suggest-chip:hover{border-color:var(--accent-2);transform:translateY(-2px);box-shadow:0 6px 14px -6px var(--shadow);background:var(--bg-elevated);}
+
+  .insights{flex:1;overflow-y:auto;padding:26px 6%;}
+  .insights-inner{max-width:900px;margin:0 auto;}
+  .insights h2{font-family:var(--font-display);font-weight:600;font-size:20px;margin:0 0 4px;}
+  .insights .sub{color:var(--ink-muted);font-size:13px;margin-bottom:22px;}
+  .stat-row{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap;perspective:800px;}
+  .stat-block{
+    flex:1;min-width:140px;border:1px solid var(--line);border-radius:10px;
+    background:color-mix(in srgb, var(--bg-elevated) 70%, transparent);padding:14px 16px;backdrop-filter:blur(10px);
+  }
+  .stat-block .n{font-family:var(--font-display);font-size:26px;font-weight:700;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .stat-block .l{font-size:11.5px;color:var(--ink-muted);margin-top:2px;}
+  .panel-title{font-family:var(--font-display);font-weight:600;font-size:14.5px;margin:0 0 12px;}
+  .barlist{border:1px solid var(--line);border-radius:6px;background:var(--bg-elevated);padding:16px 18px;margin-bottom:20px;}
+  .barrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12px;}
+  .barrow:last-child{margin-bottom:0;}
+  .barrow .bl-name{width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .barrow .bl-track{flex:1;height:8px;background:var(--surface);border-radius:4px;overflow:hidden;}
+  .barrow .bl-fill{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.2,.8,.2,1);}
+  .barrow .bl-val{width:42px;text-align:right;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);}
+  .insights-empty{color:var(--ink-muted);font-size:13px;text-align:center;padding:60px 0;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="wordmark">
+      <svg class="logo-mark" width="26" height="26" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="var(--accent)"/>
+            <stop offset="1" stop-color="var(--accent-2)"/>
+          </linearGradient>
+        </defs>
+        <path d="M20 16h18l8 8v24a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2V18a2 2 0 0 1 2-2z" fill="url(#logoGrad)"/>
+        <path d="M38 16v8h8z" fill="var(--ink)" fill-opacity=".18"/>
+        <path d="M23 30l6 6 11-13" stroke="var(--bg-elevated)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      Veritext<span class="dot">.</span>
+    </div>
+    <div class="tagline">document intelligence system</div>
+    <div class="navtabs">
+      <button id="tabAsk" class="active">Ask</button>
+      <button id="tabInsights">Insights</button>
+    </div>
+    <div class="apibox">
+      <span class="status-dot" id="statusDot"></span>
+      <input id="apiBase" value="http://localhost:8000" spellcheck="false">
+      <button class="connectbtn" id="reconnectBtn">Connect</button>
+      <button class="iconbtn2" id="exportBtn" title="Download this conversation">⬇</button>
+      <button class="iconbtn2" id="clearBtn" title="Clear conversation">🗑</button>
+      <button class="iconbtn2" id="themeBtn" title="Toggle light/dark">◐</button>
+    </div>
+  </div>
+
+  <div class="body-row">
+    <aside class="sidebar">
+      <div class="sidebar-head"><h2>The index</h2><span class="sidebar-count" id="docCount">0 documents</span></div>
+      <div class="dropzone" id="dropzone">
+        <span class="dz-icon">🗂</span>
+        <div class="dz-title">Drop a document here</div>
+        <p>.txt · .md · .pdf — multiple at once, or click to browse</p>
+      </div>
+      <input type="file" id="fileInput" accept=".txt,.md,.pdf" multiple style="display:none">
+      <div class="doclist" id="docList"><div class="sidebar-empty">Nothing indexed yet.</div></div>
+      <div class="recent-section" id="recentSection" style="display:none;">
+        <div class="recent-head">Recent questions</div>
+        <div class="recent-list" id="recentList"></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <section class="askpane" id="askPane">
+        <div class="thread" id="thread">
+          <div class="thread-inner" id="threadInner">
+            <div class="hero" id="heroEmpty">
+              <span class="hero-icon">📖</span>
+              <h1>Ask your documents anything.</h1>
+              <p>Upload a document, then ask a question. Every answer is grounded in the exact passages it was drawn from, with clickable citations back to the source.</p>
+            </div>
+          </div>
+        </div>
+        <div class="suggest-row" id="suggestRow" style="display:none;"></div>
+        <div class="composer">
+          <div class="composer-inner">
+            <div class="composer-row">
+              <textarea id="questionInput" rows="1" placeholder="Ask a question about your documents…" disabled></textarea>
+              <button class="micbtn" id="micBtn" disabled title="Ask by voice" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M19 11a7 7 0 0 1-14 0M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button class="sendbtn" id="sendBtn" disabled>↑</button>
+            </div>
+            <div class="composer-meta"><span id="composerHint">Connect to the backend and add a document to begin.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="drawer hidden glass" id="drawer">
+        <div class="drawer-head"><h3>Sources</h3><button class="drawer-close" id="drawerClose">✕</button></div>
+        <div class="drawer-body" id="drawerBody"><div class="drawer-empty">Ask a question to see the passages used.</div></div>
+      </aside>
+
+      <section class="insights" id="insightsPane" style="display:none;">
+        <div class="insights-inner" id="insightsInner">
+          <div class="insights-empty">Index a document and ask a few questions to see insights here.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined&&text!==null)n.textContent=text;return n;}
+function $(id){return document.getElementById(id);}
+
+const state = { docs:[], messages:[], recentQuestions:[], focusedMessageId:null, busy:false, connected:false };
+const DOC_COLORS = ['#8A6A1E','#3E7A72','#7A4A6B','#4A6B8A','#8A4A3E','#5A7A3E'];
+
+function apiBase(){ return $('apiBase').value.replace(/\/+$/,''); }
+
+async function checkHealth(){
+  try{
+    const res = await fetch(apiBase()+'/health');
+    if(!res.ok) throw new Error('bad status');
+    state.connected = true;
+    $('statusDot').classList.add('ok'); $('statusDot').classList.remove('bad');
+    await refreshDocs();
+  } catch(e){
+    state.connected = false;
+    $('statusDot').classList.add('bad'); $('statusDot').classList.remove('ok');
+  }
+  refreshComposerState();
+}
+
+async function refreshDocs(){
+  try{
+    const res = await fetch(apiBase()+'/documents');
+    if(!res.ok) throw new Error('failed to list documents');
+    const docs = await res.json();
+    state.docs = docs.map((d,i)=>Object.assign({}, d, {color: DOC_COLORS[i % DOC_COLORS.length]}));
+    renderDocList();
+    renderSuggestions();
+    renderInsights();
+    refreshComposerState();
+  } catch(e){ /* leave last known list; health check surfaces the connection issue */ }
+}
+
+/* Subtle CSS-only 3D tilt: rotates an element slightly toward the pointer.
+   Pure transform math, no WebGL/three.js — nothing here can fail to load. */
+function applyTilt(node, maxDeg){
+  maxDeg = maxDeg || 6;
+  node.addEventListener('pointermove', function(e){
+    const r = node.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    node.style.transform = 'perspective(700px) rotateY('+(px*maxDeg*2)+'deg) rotateX('+(py*-maxDeg*2)+'deg) translateZ(4px)';
+  });
+  node.addEventListener('pointerleave', function(){ node.style.transform=''; });
+}
+
+function renderDocList(){
+  const list = $('docList');
+  list.innerHTML='';
+  $('docCount').textContent = state.docs.length + (state.docs.length===1?' document':' documents');
+  if(state.docs.length===0){ list.appendChild(el('div','sidebar-empty','Nothing indexed yet.')); return; }
+  state.docs.forEach(doc=>{
+    const card = el('div','doccard tilt tilt-shadow');
+    card.style.setProperty('--doc-color', doc.color);
+    card.appendChild(el('span','dc-title', doc.name));
+    card.appendChild(el('div','dc-meta', doc.words.toLocaleString()+' words · '+doc.chunk_count+' passages'));
+    if(doc.summary) card.appendChild(el('div','dc-summary', doc.summary));
+    if(doc.keywords && doc.keywords.length){
+      const kw = el('div','dc-keywords');
+      doc.keywords.forEach(k=>kw.appendChild(el('span','chip',k)));
+      card.appendChild(kw);
+    }
+    const rm = el('button','dc-remove','✕');
+    rm.addEventListener('click', ()=>removeDoc(doc.doc_id));
+    card.appendChild(rm);
+    list.appendChild(card);
+    applyTilt(card, 3);
+  });
+}
+
+/* ---- Automation: one-click suggested questions, generated locally from
+   what's already indexed (no extra API call — instant and free). ---- */
+function renderSuggestions(){
+  const row = $('suggestRow');
+  row.innerHTML='';
+  if(state.docs.length===0 || state.messages.length>0){ row.style.display='none'; return; }
+  const prompts = ['Summarize this in a few sentences', 'What are the key points?', 'Who or what is this document about?'];
+  if(state.docs.length>1) prompts.push('What do these documents have in common?');
+  prompts.forEach(p=>{
+    const chip = el('button','suggest-chip', p);
+    chip.addEventListener('click', ()=>askQuestion(p));
+    row.appendChild(chip);
+  });
+  row.style.display = 'flex';
+}
+
+/* ---- Insights tab: built entirely from data the backend already returns
+   (document list + the last query's sources) — no new endpoints needed. ---- */
+function renderInsights(){
+  const wrap = $('insightsInner');
+  wrap.innerHTML='';
+  if(state.docs.length===0){
+    wrap.appendChild(el('div','insights-empty','Index a document and ask a few questions to see insights here.'));
+    return;
+  }
+  wrap.appendChild(el('h2',null,'Insights'));
+  wrap.appendChild(el('div','sub','What\u2019s in the index, and how the last answer was grounded.'));
+
+  const totalChunks = state.docs.reduce((s,d)=>s+d.chunk_count,0);
+  const totalWords = state.docs.reduce((s,d)=>s+d.words,0);
+  const answered = state.messages.filter(m=>m.sources && m.sources.length).length;
+
+  const row = el('div','stat-row');
+  row.appendChild(statBlock(state.docs.length, state.docs.length===1?'document indexed':'documents indexed'));
+  row.appendChild(statBlock(totalChunks, 'searchable passages'));
+  row.appendChild(statBlock(totalWords.toLocaleString(), 'words processed'));
+  row.appendChild(statBlock(answered, answered===1?'question answered':'questions answered'));
+  wrap.appendChild(row);
+
+  const lastAi = state.messages.slice().reverse().find(m=>m.sources && m.sources.length);
+  if(lastAi){
+    const hero = el('div','stat-hero');
+    hero.style.cssText='border:1px solid var(--line);border-radius:6px;background:var(--bg-elevated);padding:18px 20px;margin-bottom:20px;';
+    const avg = lastAi.sources.reduce((s,x)=>s+x.score,0)/lastAi.sources.length;
+    const n = el('div', null, Math.round(avg*100)+'%');
+    n.style.cssText='font-family:var(--font-display);font-size:38px;font-weight:700;color:var(--ink);line-height:1;';
+    hero.appendChild(n);
+    hero.appendChild(el('div','l','average relevance of passages used in the most recent answer'));
+    wrap.appendChild(hero);
+  }
+
+  const barlist = el('div','barlist');
+  barlist.appendChild(el('div','panel-title','Passages per document'));
+  const maxC = Math.max.apply(null, state.docs.map(d=>d.chunk_count).concat([1]));
+  state.docs.forEach(d=>{
+    const r = el('div','barrow');
+    r.appendChild(el('span','bl-name', d.name));
+    const track = el('div','bl-track');
+    const fill = el('div','bl-fill');
+    fill.style.width = Math.round((d.chunk_count/maxC)*100)+'%';
+    fill.style.background = d.color;
+    track.appendChild(fill);
+    r.appendChild(track);
+    r.appendChild(el('span','bl-val', String(d.chunk_count)));
+    barlist.appendChild(r);
+  });
+  wrap.appendChild(barlist);
+}
+function statBlock(n,l){
+  const b = el('div','stat-block tilt tilt-shadow');
+  b.appendChild(el('div','n', String(n)));
+  b.appendChild(el('div','l', l));
+  applyTilt(b, 4);
+  return b;
+}
+
+async function removeDoc(id){
+  try{ await fetch(apiBase()+'/documents/'+id, {method:'DELETE'}); } catch(e){}
+  await refreshDocs();
+}
+
+async function handleFiles(files){
+  for(const file of files){
+    setStatusHint('Uploading and indexing "'+file.name+'"…');
+    const fd = new FormData();
+    fd.append('file', file);
+    try{
+      const res = await fetch(apiBase()+'/documents/upload', {method:'POST', body:fd});
+      if(!res.ok){ const err = await res.json().catch(()=>({detail:'Upload failed'})); throw new Error(err.detail||'Upload failed'); }
+      await refreshDocs();
+    } catch(e){ alert('Could not upload "'+file.name+'": '+e.message); }
+  }
+  refreshComposerState();
+}
+
+function refreshComposerState(){
+  const ready = state.connected && state.docs.length>0 && !state.busy;
+  $('questionInput').disabled = !ready;
+  $('sendBtn').disabled = !ready;
+  $('micBtn').disabled = !ready || !voiceSupported;
+  $('composerHint').textContent = !state.connected
+    ? 'Not connected to the backend — check the API URL above and click Connect.'
+    : (state.docs.length===0 ? 'Add a document to start asking questions.' : 'Answers are grounded in your indexed documents, with citations.');
+}
+function setStatusHint(text){ $('composerHint').textContent = text; }
+
+/* Renders an answer as clean, normal prose — like a standard chat assistant
+   reply. Strips the raw [1][2] citation markers from the visible text (the
+   underlying sources are still available via the "N sources" button, just
+   not cluttering the sentence itself), and properly renders basic markdown
+   (**bold**, bullet/numbered lists, paragraphs) instead of showing literal
+   asterisks. Built entirely with textContent/createElement — never
+   innerHTML — so nothing the model writes can ever execute as markup. */
+function renderRichText(container, text){
+  container.textContent = '';
+  const clean = (text || '').replace(/\s?\[\d+(?:\s*,\s*\d+)*\]/g, '');
+  const blocks = clean.split(/\n{2,}/).map(b=>b.trim()).filter(Boolean);
+  if(blocks.length === 0){ container.appendChild(document.createTextNode(clean)); return; }
+
+  blocks.forEach(block=>{
+    const lines = block.split(/\n/).map(l=>l.trim()).filter(Boolean);
+    const isList = lines.length>0 && lines.every(l => /^[-*•]\s+/.test(l) || /^\d+[.)]\s+/.test(l));
+    if(isList){
+      const ordered = /^\d+[.)]\s+/.test(lines[0]);
+      const list = document.createElement(ordered ? 'ol' : 'ul');
+      list.className = 'ai-list';
+      lines.forEach(line=>{
+        const liText = line.replace(/^[-*•]\s+/,'').replace(/^\d+[.)]\s+/,'');
+        const li = document.createElement('li');
+        renderInlineMarkdown(li, liText);
+        list.appendChild(li);
+      });
+      container.appendChild(list);
+    } else {
+      const p = document.createElement('p');
+      p.className = 'ai-para';
+      renderInlineMarkdown(p, block.replace(/\n/g, ' '));
+      container.appendChild(p);
+    }
+  });
+}
+
+function renderInlineMarkdown(container, text){
+  const re = /\*\*(.+?)\*\*/g;
+  let last=0, m;
+  while((m = re.exec(text))){
+    if(m.index>last) container.appendChild(document.createTextNode(text.slice(last,m.index)));
+    const strong = document.createElement('strong');
+    strong.textContent = m[1];
+    container.appendChild(strong);
+    last = re.lastIndex;
+  }
+  if(last<text.length) container.appendChild(document.createTextNode(text.slice(last)));
+}
+
+function appendUserMessage(text){
+  const wrap = el('div','msg msg-user');
+  wrap.appendChild(el('div','bubble', text));
+  $('threadInner').appendChild(wrap);
+  $('thread').scrollTop = $('thread').scrollHeight;
+}
+function appendAiMessage(msg){
+  const wrap = el('div','msg msg-ai');
+  wrap.id = 'msg-'+msg.id;
+  wrap.appendChild(el('div','ai-mark','V'));
+  const body = el('div','ai-body');
+  const pending = el('div','ai-text pending');
+  pending.appendChild(document.createTextNode('Retrieving and generating '));
+  const dots = el('span','dotflicker');
+  dots.appendChild(el('span',null,'.'));
+  dots.appendChild(el('span',null,'.'));
+  dots.appendChild(el('span',null,'.'));
+  pending.appendChild(dots);
+  body.appendChild(pending);
+  wrap.appendChild(body);
+  $('threadInner').appendChild(wrap);
+  $('thread').scrollTop = $('thread').scrollHeight;
+  return wrap;
+}
+function renderAiMessage(node, msg){
+  const body = node.querySelector('.ai-body');
+  body.innerHTML='';
+  const textDiv = el('div','ai-text');
+  renderRichText(textDiv, msg.text||'…');
+  body.appendChild(textDiv);
+  const foot = el('div','ai-foot');
+  if(msg.sources && msg.sources.length){
+    const btn = el('button', null, '📎 '+msg.sources.length+' source'+(msg.sources.length>1?'s':''));
+    btn.addEventListener('click', ()=>openDrawerFor(msg));
+    foot.appendChild(btn);
+  }
+  if(msg.text){
+    const copyBtn = el('button', null, '⧉ Copy');
+    copyBtn.addEventListener('click', ()=>{
+      navigator.clipboard.writeText(msg.text).then(()=>{
+        copyBtn.textContent = '✓ Copied';
+        setTimeout(()=>{ copyBtn.textContent = '⧉ Copy'; }, 1500);
+      }).catch(()=>{});
+    });
+    foot.appendChild(copyBtn);
+  }
+  body.appendChild(foot);
+  $('thread').scrollTop = $('thread').scrollHeight;
+}
+
+function openDrawerFor(msg){
+  state.focusedMessageId = msg.id;
+  renderDrawer();
+  $('drawer').classList.remove('hidden');
+}
+function renderDrawer(){
+  const body = $('drawerBody');
+  body.innerHTML='';
+  const msg = state.messages.find(m=>m.id===state.focusedMessageId);
+  if(!msg || !msg.sources || !msg.sources.length){
+    body.appendChild(el('div','drawer-empty','Ask a question to see the passages used.'));
+    return;
+  }
+  const maxScore = Math.max.apply(null, msg.sources.map(s=>s.score).concat([0.0001]));
+  msg.sources.forEach(s=>{
+    const card = el('div','source-card');
+    card.id = 'source-'+msg.id+'-'+s.rank;
+    const head = el('div','sc-head');
+    head.appendChild(el('span','sc-num', String(s.rank)));
+    const docLabel = s.page_number ? (s.doc_name + ' — page ' + s.page_number) : s.doc_name;
+    head.appendChild(el('span','sc-doc', docLabel));
+    card.appendChild(head);
+    card.appendChild(el('div','sc-text', s.text));
+    const rel = el('div','relbar');
+    const fill = el('div','relbar-fill');
+    fill.style.width = Math.max(6, Math.round((s.score/maxScore)*100))+'%';
+    rel.appendChild(fill);
+    card.appendChild(rel);
+    body.appendChild(card);
+  });
+}
+
+let msgSeq = 0;
+async function askQuestion(question){
+  question = question.trim();
+  if(!question || state.busy) return;
+  $('heroEmpty').style.display='none';
+  $('suggestRow').style.display='none';
+  state.busy = true; refreshComposerState();
+  appendUserMessage(question);
+  $('questionInput').value=''; autosizeTextarea();
+  rememberRecentQuestion(question);
+
+  const msg = { id: ++msgSeq, question:question, text:'', sources:[] };
+  state.messages.push(msg);
+  const node = appendAiMessage(msg);
+  await runQuery(question, msg, node);
+  state.busy = false; refreshComposerState();
+  renderInsights();
+  persistChat();
+}
+
+function recentHistory(beforeMsg, maxTurns){
+  // The last few completed Q&A pairs, oldest first, excluding the message
+  // currently being answered and anything that errored out (no sense
+  // feeding a failed attempt back in as if it were a real answer).
+  const done = state.messages.filter(m => m !== beforeMsg && m.text && !m.isError);
+  return done.slice(-maxTurns).map(m => ({ question: m.question, answer: m.text }));
+}
+
+async function runQuery(question, msg, node){
+  const controller = new AbortController();
+  // Grounded generation can genuinely take 15-30s (retrieval + optional
+  // re-rank + generation are two LLM calls back to back). 60s is a generous
+  // ceiling before we treat it as actually stuck rather than just slow.
+  const timeoutId = setTimeout(()=>controller.abort(), 60000);
+
+  try{
+    const res = await fetch(apiBase()+'/query', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        question:question, top_k:5, hybrid_rerank:true,
+        history: recentHistory(msg, 3)
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if(!res.ok){ const err = await res.json().catch(()=>({detail:'Query failed'})); throw {kind:'server', message: err.detail||'Query failed'}; }
+    const data = await res.json();
+    msg.text = data.answer;
+    msg.isError = false;
+    msg.sources = (data.sources||[]).map(s=>({rank:s.rank, doc_name:s.doc_name, text:s.text, score:s.score, page_number:s.page_number}));
+    renderAiMessage(node, msg);
+  } catch(e){
+    clearTimeout(timeoutId);
+    let message;
+    if(e && e.name === 'AbortError'){
+      message = "This is taking much longer than expected (over a minute) — the server may be slow or unreachable right now.";
+    } else if(e && e.kind === 'server'){
+      message = e.message;
+    } else {
+      message = "Couldn't reach the backend at " + apiBase() + ". Make sure the uvicorn server is still running in VS Code, and that the API URL above is correct.";
+    }
+    msg.isError = true;
+    renderAiError(node, msg, message, question);
+  }
+}
+
+function renderAiError(node, msg, message, question){
+  const body = node.querySelector('.ai-body');
+  body.innerHTML = '';
+  body.appendChild(el('div', 'ai-text err-text', message));
+  const retry = el('button', 'retry-btn', 'Try again');
+  retry.addEventListener('click', async ()=>{
+    body.innerHTML='';
+    const pending = el('div','ai-text pending','Retrying…');
+    body.appendChild(pending);
+    state.busy = true; refreshComposerState();
+    await runQuery(question, msg, node);
+    state.busy = false; refreshComposerState();
+  });
+  body.appendChild(retry);
+  $('thread').scrollTop = $('thread').scrollHeight;
+}
+
+function autosizeTextarea(){
+  const ta = $('questionInput');
+  ta.style.height='auto';
+  ta.style.height = Math.min(ta.scrollHeight,120)+'px';
+}
+
+$('reconnectBtn').addEventListener('click', checkHealth);
+$('dropzone').addEventListener('click', ()=>$('fileInput').click());
+$('dropzone').addEventListener('dragover', function(e){e.preventDefault(); $('dropzone').classList.add('hover');});
+$('dropzone').addEventListener('dragleave', function(){ $('dropzone').classList.remove('hover'); });
+$('dropzone').addEventListener('drop', function(e){ e.preventDefault(); $('dropzone').classList.remove('hover'); if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+$('fileInput').addEventListener('change', function(e){ if(e.target.files.length) handleFiles(e.target.files); e.target.value=''; });
+$('questionInput').addEventListener('input', autosizeTextarea);
+$('questionInput').addEventListener('keydown', function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); askQuestion($('questionInput').value); } });
+$('sendBtn').addEventListener('click', function(){ askQuestion($('questionInput').value); });
+$('drawerClose').addEventListener('click', function(){ $('drawer').classList.add('hidden'); });
+
+$('tabAsk').addEventListener('click', function(){
+  $('tabAsk').classList.add('active'); $('tabInsights').classList.remove('active');
+  $('askPane').style.display=''; $('insightsPane').style.display='none';
+  if(state.focusedMessageId) $('drawer').classList.remove('hidden');
+});
+$('tabInsights').addEventListener('click', function(){
+  $('tabInsights').classList.add('active'); $('tabAsk').classList.remove('active');
+  $('askPane').style.display='none'; $('drawer').classList.add('hidden');
+  $('insightsPane').style.display=''; renderInsights();
+});
+
+/* ---- Advanced feature: conversation persists across a page refresh.
+   The backend already keeps documents and chunks forever (ChromaDB +
+   the registry file), so only the chat thread itself needs saving here —
+   purely a per-browser convenience via localStorage. ---- */
+function persistChat(){
+  try{
+    const payload = state.messages.map(m => ({
+      id:m.id, question:m.question, text:m.text, sources:m.sources, isError:!!m.isError
+    }));
+    localStorage.setItem('veritext_chat', JSON.stringify(payload));
+  } catch(e){ /* storage unavailable or full — conversation just won't survive a refresh */ }
+}
+
+function restoreChat(){
+  try{
+    const raw = localStorage.getItem('veritext_chat');
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    if(!Array.isArray(saved) || saved.length===0) return;
+    saved.forEach(m=>{
+      state.messages.push(m);
+      if(typeof m.id === 'number' && m.id >= msgSeq) msgSeq = m.id + 1;
+      appendUserMessage(m.question || '');
+      const node = appendAiMessage(m);
+      if(m.isError) renderAiError(node, m, m.text, m.question);
+      else renderAiMessage(node, m);
+    });
+    $('heroEmpty').style.display = 'none';
+    $('suggestRow').style.display = 'none';
+  } catch(e){ /* corrupted saved chat — just start fresh */ }
+}
+
+$('clearBtn').addEventListener('click', function(){
+  if(state.messages.length===0) return;
+  if(!confirm('Clear this conversation? Your indexed documents are not affected.')) return;
+  state.messages = [];
+  state.focusedMessageId = null;
+  $('threadInner').innerHTML = '';
+  $('threadInner').appendChild($('heroEmpty'));
+  $('heroEmpty').style.display = '';
+  $('drawer').classList.add('hidden');
+  try{ localStorage.removeItem('veritext_chat'); } catch(e){}
+  renderSuggestions();
+  renderInsights();
+});
+
+/* ---- Advanced feature: a running list of recent questions in the sidebar,
+   click one to ask it again instantly. Persisted separately from the full
+   conversation since it's meant to long-outlive any single chat session. ---- */
+function rememberRecentQuestion(q){
+  q = q.trim();
+  if(!q) return;
+  state.recentQuestions = state.recentQuestions.filter(x => x !== q);
+  state.recentQuestions.unshift(q);
+  state.recentQuestions = state.recentQuestions.slice(0, 8);
+  try{ localStorage.setItem('veritext_recent_qs', JSON.stringify(state.recentQuestions)); } catch(e){}
+  renderRecentQuestions();
+}
+
+function restoreRecentQuestions(){
+  try{
+    const raw = localStorage.getItem('veritext_recent_qs');
+    if(raw){ const saved = JSON.parse(raw); if(Array.isArray(saved)) state.recentQuestions = saved; }
+  } catch(e){}
+  renderRecentQuestions();
+}
+
+function renderRecentQuestions(){
+  const section = $('recentSection');
+  const list = $('recentList');
+  list.innerHTML = '';
+  if(state.recentQuestions.length===0){ section.style.display='none'; return; }
+  section.style.display = '';
+  state.recentQuestions.forEach(q=>{
+    const item = el('div','recent-item', q);
+    item.title = q;
+    item.addEventListener('click', ()=>askQuestion(q));
+    list.appendChild(item);
+  });
+}
+
+/* ---- Advanced feature: manual light/dark theme toggle, remembered
+   per-browser via localStorage. Falls back silently if storage is blocked. ---- */
+(function initTheme(){
+  let saved = null;
+  try{ saved = localStorage.getItem('stacks_theme'); } catch(e){}
+  if(saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved);
+  updateThemeBtn();
+})();
+function updateThemeBtn(){
+  const current = document.documentElement.getAttribute('data-theme');
+  $('themeBtn').textContent = current === 'light' ? '☀' : (current === 'dark' ? '☾' : '◐');
+}
+$('themeBtn').addEventListener('click', function(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const next = current === 'light' ? 'dark' : (current === 'dark' ? 'light' : (prefersDark ? 'light' : 'dark'));
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('stacks_theme', next); } catch(e){}
+  updateThemeBtn();
+});
+
+/* ---- Advanced feature: export the whole conversation as a Markdown file,
+   entirely client-side (no backend call needed). ---- */
+$('exportBtn').addEventListener('click', function(){
+  if(state.messages.length===0){ alert('Ask a question first — nothing to export yet.'); return; }
+  const lines = ['# Veritext conversation', ''];
+  state.docs.forEach(d=>{ lines.push('- Indexed: ' + d.name + ' (' + d.words + ' words, ' + d.chunk_count + ' passages)'); });
+  lines.push('');
+  // Reconstructed from the rendered thread (not state.messages) since that's
+  // the simplest single source of truth for exactly what the user saw.
+  const threadText = Array.prototype.slice.call(document.querySelectorAll('#threadInner .msg')).map(function(node){
+    if(node.classList.contains('msg-user')) return '**You:** ' + node.textContent.trim();
+    return '**Veritext:** ' + node.querySelector('.ai-text').textContent.trim();
+  }).join('\n\n');
+  lines.push(threadText);
+  const blob = new Blob([lines.join('\n')], {type:'text/markdown'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'stacks-conversation.md';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+/* ---- Advanced feature: keyboard shortcuts. "/" focuses the question box
+   from anywhere (like Slack/Linear), Escape closes the sources drawer. ---- */
+/* ---- Advanced feature: voice input. Uses the browser's built-in speech
+   recognition (Chrome/Edge/Safari) — no external library, nothing to load,
+   so it can't fail to fetch. On unsupported browsers (e.g. Firefox) the mic
+   button simply stays hidden instead of showing a broken feature. ---- */
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+const voiceSupported = !!SpeechRecognitionAPI;
+let recognizer = null;
+let isListening = false;
+
+if(!voiceSupported){
+  $('micBtn').style.display = 'none';
+} else {
+  recognizer = new SpeechRecognitionAPI();
+  recognizer.continuous = false;
+  recognizer.interimResults = true;
+  recognizer.lang = 'en-US';
+
+  recognizer.onresult = function(e){
+    let transcript = '';
+    for(let i=0; i<e.results.length; i++){ transcript += e.results[i][0].transcript; }
+    $('questionInput').value = transcript;
+    autosizeTextarea();
+  };
+  recognizer.onerror = function(e){
+    setListening(false);
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+      setStatusHint('Microphone access was blocked — allow it in your browser\u2019s address-bar permissions and try again.');
+    } else if(e.error === 'no-speech'){
+      setStatusHint('Didn\u2019t catch any speech — try again.');
+    }
+  };
+  recognizer.onend = function(){
+    setListening(false);
+    const text = $('questionInput').value.trim();
+    if(text) askQuestion(text);
+  };
+
+  $('micBtn').addEventListener('click', function(){
+    if($('micBtn').disabled) return;
+    if(isListening){ recognizer.stop(); return; }
+    try{
+      $('questionInput').value = '';
+      recognizer.start();
+      setListening(true);
+    } catch(e){ setListening(false); }
+  });
+}
+
+function setListening(on){
+  isListening = on;
+  $('micBtn').classList.toggle('listening', on);
+  if(on) setStatusHint('Listening\u2026 speak your question.');
+  else refreshComposerState();
+}
+
+document.addEventListener('keydown', function(e){
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(e.key === '/' && tag !== 'TEXTAREA' && tag !== 'INPUT'){
+    e.preventDefault();
+    if(!$('questionInput').disabled) $('questionInput').focus();
+  }
+  if(e.key === 'Escape'){
+    $('drawer').classList.add('hidden');
+  }
+});
+
+restoreChat();
+restoreRecentQuestions();
+checkHealth();
+// The server needs ~20-60s to load its embedding model on first start, so keep
+// retrying quietly until it answers; the dot turns green by itself.
+setInterval(function(){ if(!state.connected) checkHealth(); }, 3000);
+})();
+</script>
+</body>
+</html>
